@@ -15,7 +15,7 @@ Install
 sudo cp bin/bounce /usr/local/bin
 
 
-Why
+Why?
 ---
 
 It was written for use with Node (which doesn't auto restart)
@@ -23,7 +23,7 @@ It was written for use with Node (which doesn't auto restart)
 Test
 ----
 
-Run 
+Run:
 
 bin/bounce test/watch node test/test.js
 
