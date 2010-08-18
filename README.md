@@ -28,3 +28,11 @@ Run:
 bin/bounce test/watch node test/test.js
 
 Changes to test/watch/file.js should cause the counter to restart
+
+Todo
+----
+
+* Needs a better option parser
+* Recursive watch
+* Watch multiple dirs
+* Watch non-js files
