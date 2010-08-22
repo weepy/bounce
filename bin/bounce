@@ -1,14 +1,55 @@
 #!/usr/bin/env node
 
-var args = process.ARGV.slice(2)
-var watchDir = args.shift()
-var prog = args.shift()
-var child
-var fs = require("fs")
+var args = process.ARGV.slice(2),
+    wdir = "./", //args.shift()
+    prog = "node", //args.shift()
+    child,
+    fs = require("fs"),
+    path = require("path"),
+    watching = {}
 
-function load() {
+function debug(s) {
+  if(0)  
+    console.log(s)
+}
+
+function watchDir(dir) {
+  debug("looking inside dir " + dir)
+  var files = fs.readdirSync(dir) 
+  for(var i =0; i < files.length;i++) {
+    var file = files[i]
+    var fullPath = path.join(dir, file)
+
+    stats = fs.statSync(fullPath)        
+    if(stats.isDirectory()) {
+      if(!file.match(/^\./))  // ignore folders starting with .  
+        watchDir(fullPath)
+    }
+    else if(file.match(/\.js$/))
+      watch(fullPath)
+  }
+}
+
+function watch(source) {
+  if(watching[source]) return
+  watching[source] = true
+  debug("watching " + source)
+  return fs.watchFile(source, {
+    persistent: true,
+    interval: 500
+  }, function(curr, prev) {
+    if (curr.mtime.getTime() === prev.mtime.getTime()) {
+      return null;
+    }
+    debug("=> Bouncing....")
+    respawn()
+  });
+};
+
+
+function spawn() {
   child = require('child_process').spawn(prog, args);
-  console.log('Spawned ' + prog + args.join(" ") + ", with PID=" + child.pid);
+  console.log('Spawned ' + prog + " " + args.join(" ") + ", with PID=" + child.pid);
   child.stdout.on('data', function(data) {
     data = data.toString().replace(/\n$/,"")
     console.log(data);
@@ -22,36 +63,16 @@ function load() {
   });
 };
 
-load()
-
-// only watches .js
-function watchFiles(dir) {
-  var files = fs.readdirSync(dir) 
-  for(var i =0; i< files.length;i++) {
-    var file = files[i]
-    if(!file.match(/\.js$/)) continue
-    watch(dir + "/" + file)
-  }
-}
-
-watchFiles(watchDir)
-
-function watch(source) {
-  return fs.watchFile(source, {
-    persistent: true,
-    interval: 500
-  }, function(curr, prev) {
-    if (curr.mtime.getTime() === prev.mtime.getTime()) {
-      return null;
-    }
-    console.log("CHANGED")
-    respawn()
-  });
-};
-
 function respawn() {
-  child.kill()
+  if(child) child.kill()
   setTimeout(function() {
-    load()
+    spawn()
   }, 50)
 }
+
+spawn();
+watchDir(wdir);
+setInterval(function() {
+  watchDir(wdir);
+}, 10000) // look for new files every 10s
+

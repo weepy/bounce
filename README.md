@@ -1,38 +1,40 @@
 Bounce
 ====
 
-Simple program that runs a child process whilst watching a directory for file changes.
-If a file within that dir is modified, the child process is restarted.
+Reloads node upon changes to source files. 
+Great for development.
 
-Usage
+How?
 ----
 
-bin/bounce path/to/watch/dir prog/to/run arg1 arg2
+Runs node as child process whilst watching JS file in the current directory and below for changes.
+If a change is detected, the node child process is restarted. It also looks for new files JS every 10s.
+
+All STDOUT AND STDERR should be piped back to the console, so it shouldn't look any different.
 
 Install
 -----
 
-sudo cp bin/bounce /usr/local/bin
+sudo bin/install
 
-
-Why?
----
-
-It was written for use with Node (which doesn't auto restart)
-
-Test
+Usage
 ----
 
-Run:
+simply replace 'node' for 'bounce'. E.g.
 
-bin/bounce test/watch node test/test.js
+bounce lib/server.js
 
-Changes to test/watch/file.js should cause the counter to restart
+
+Running Tests
+----
+
+bin/bounce test/test.js
+
+Changes to test.js and watch/file.js should cause the counter to restart.
+
+Tested on Ubuntu/OSX on Node 0.2.0 and 0.1.104
 
 Todo
 ----
 
-* Needs a better option parser
-* Recursive watch
-* Watch multiple dirs
-* Watch non-js files
+* how to handle watching different directories than CWD ?
