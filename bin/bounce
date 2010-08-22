@@ -6,7 +6,8 @@ var args = process.ARGV.slice(2),
     child,
     fs = require("fs"),
     path = require("path"),
-    watching = {}
+    watching = {},
+    steppedInto = {}
 
 function debug(s) {
   if(0)  
@@ -15,18 +16,30 @@ function debug(s) {
 
 function watchDir(dir) {
   debug("looking inside dir " + dir)
+  if(steppedInto[dir]) {
+    debug("we've already stepped in here, skipping")
+    return
+  }
+  steppedInto[dir] = true
+  
   var files = fs.readdirSync(dir) 
   for(var i =0; i < files.length;i++) {
     var file = files[i]
     var fullPath = path.join(dir, file)
 
-    stats = fs.statSync(fullPath)        
-    if(stats.isDirectory()) {
-      if(!file.match(/^\./))  // ignore folders starting with .  
-        watchDir(fullPath)
+    try {
+      var stats = fs.statSync(fullPath)        
+      if(stats.isDirectory()) {
+        if(!file.match(/^\./))  // ignore folders starting with .  
+          watchDir(fullPath)
+      }
+      else if(file.match(/\.js$/))
+        watch(fullPath)
     }
-    else if(file.match(/\.js$/))
-      watch(fullPath)
+    catch(e) {
+      debug(e.toString()) // statSync can throw exception e.g. with cyclic symbolic links
+      debug("skipping")
+    }
   }
 }
 
@@ -56,18 +69,24 @@ function spawn() {
   });
   child.stderr.on('data', function(data) {
     data = data.toString().replace(/\n$/,"")
-    console.log('child stderr: ' + data);
+    console.log(data);
   });
   return child.on('exit', function(code) {
-    console.log('child process exited with code ' + (code ? code.toString : "null"));
+    console.log('node exited with code ' + (code ? code.toString() : "null"));
+    if(!expectingExit)
+      process.exit(0)
   });
 };
 
+var expectingExit = false
+
 function respawn() {
+  expectingExit = true // will this work ? 
   if(child) child.kill()
   setTimeout(function() {
     spawn()
-  }, 50)
+    expectingExit = false
+  }, 250)
 }
 
 spawn();
