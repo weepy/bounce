@@ -55,7 +55,7 @@ function watch(source) {
       return null;
     }
     debug("=> Bouncing....")
-    respawn()
+    child.kill("SIGTERM")
   });
 };
 
@@ -71,21 +71,20 @@ function spawn() {
     data = data.toString().replace(/\n$/,"")
     console.log(data);
   });
-  return child.on('exit', function(code) {
-    console.log('node exited with code ' + (code ? code.toString() : "null"));
-    if(!expectingExit)
+  return child.on('exit', function(code, signal) {
+    if(code == null && signal == "SIGTERM") 
+      respawn()
+    else {
+      console.log('node exited with code ' + (code ? code.toString() : "null") + " and signal " + (signal ? signal.toString() : "null"));
       process.exit(0)
+    }
   });
 };
 
-var expectingExit = false
 
 function respawn() {
-  expectingExit = true // will this work ? 
-  if(child) child.kill()
   setTimeout(function() {
     spawn()
-    expectingExit = false
   }, 250)
 }
 

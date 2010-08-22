@@ -28,9 +28,12 @@ bounce lib/server.js
 Running Tests
 ----
 
-bin/bounce test/test.js
+* bin/bounce test/test.js
 
-Changes to test.js and watch/file.js should cause the counter to restart.
+  Changes to test.js and watch/file.js should cause the counter to restart.
+
+* bin/bounce test/error.js
+  Should throw an error and exit immediately
 
 Tested on Ubuntu/OSX on Node 0.2.0 and 0.1.104
 
