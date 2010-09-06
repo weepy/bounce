@@ -54,8 +54,13 @@ function watch(source) {
     if (curr.mtime.getTime() === prev.mtime.getTime()) {
       return null;
     }
-    debug("=> Bouncing....")
-    child.kill("SIGTERM")
+    if (child && child.pid) {
+        debug("=> Bouncing....")
+        child.kill("SIGTERM")
+    } else {
+        debug("=> Launching after crash....")
+        respawn();
+    }
   });
 };
 
@@ -76,7 +81,7 @@ function spawn() {
       respawn()
     else {
       console.log('node exited with code ' + (code ? code.toString() : "null") + " and signal " + (signal ? signal.toString() : "null"));
-      process.exit(0)
+      child = null;
     }
   });
 };
