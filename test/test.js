@@ -9,6 +9,9 @@ function go() {
   } else {
     process.exit(0) 
   }
+  
+  if(i == 10)
+    throw "error!"
 }
 
 

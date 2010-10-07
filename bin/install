@@ -1,3 +1,3 @@
 cp bin/bounce /usr/local/bin
 echo "Bounce installed"
-echo "now use 'bounce' instead of 'node' to reload"
+

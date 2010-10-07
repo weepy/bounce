@@ -1,45 +1,63 @@
 #!/usr/bin/env node
 
-var args = process.ARGV.slice(2),
-    wdir = "./", //args.shift()
-    prog = "node", //args.shift()
+// RUN LIKE 
+var watchPaths, 
     child,
     fs = require("fs"),
     path = require("path"),
     watching = {},
-    steppedInto = {}
+    steppedInto = {},
+    respawnOnExit = false,
+    glob = require("glob"),
+    growlNotify = false
+
+var growl = require("growl")
+command = process.ARGV[process.ARGV.length-1]
+var args = process.ARGV
+for(var i=0; i <args.length; i++) {
+  var arg = args[i]
+  if(arg == "-w") watchPaths = args[i+1].split(",")
+  if(arg == "-r") respawnOnExit = true;
+  if(arg == "-g") growlNotify = true;
+  if(arg == "-h") usage()
+}
+
+function usage() {
+  
+  log("bounce -w [-r] [-g] 'command_to_run -a -b arg1 arg2' ")
+  log("")
+  log("-w: watch paths, comma separated. If using globs (*) then must be wrapped in quotes, e.g. 'lib/*.*' ")
+  log("-r: respawn on child process exit")
+  log("-g: growl notify on child process exit (needs growlnotify)")
+  log("-h: show this usage")
+  process.exit(0)
+}
+
+
+if(!command || !watchPaths || !watchPaths.length) {
+  //log("Error: must provide command to run")
+  usage()
+}
+
+function log() {
+  console.log.apply(null, arguments)
+}
 
 function debug(s) {
   if(0)  
-    console.log(s)
+    log(s)
 }
 
-function watchDir(dir) {
-  debug("looking inside dir " + dir)
-  if(steppedInto[dir]) {
-    debug("we've already stepped in here, skipping")
-    return
-  }
-  steppedInto[dir] = true
-  
-  var files = fs.readdirSync(dir) 
-  for(var i =0; i < files.length;i++) {
-    var file = files[i]
-    var fullPath = path.join(dir, file)
+var files = []
 
-    try {
-      var stats = fs.statSync(fullPath)        
-      if(stats.isDirectory()) {
-        if(!file.match(/^\./))  // ignore folders starting with .  
-          watchDir(fullPath)
-      }
-      else if(file.match(/\.js$/))
-        watch(fullPath)
-    }
-    catch(e) {
-      debug(e.toString()) // statSync can throw exception e.g. with cyclic symbolic links
-      debug("skipping")
-    }
+for(var i in watchPaths) {
+  files = files.concat(glob.globSync(watchPaths[i]))
+}
+
+function watchFiles(files) {
+  for(var i in files) {
+    log("Watching: " + files[i]);
+    watch(files[i])
   }
 }
 
@@ -61,22 +79,35 @@ function watch(source) {
 
 
 function spawn() {
+  
+  var args = command.split(" ")
+  var prog = args.shift()
+  //log(prog, args)
   child = require('child_process').spawn(prog, args);
-  console.log('Spawned ' + prog + " " + args.join(" ") + ", with PID=" + child.pid);
+  log('Spawned ' + prog + " " + args.join(" ") + ", with PID=" + child.pid);
   child.stdout.on('data', function(data) {
     data = data.toString().replace(/\n$/,"")
-    console.log(data);
+    log(data);
   });
   child.stderr.on('data', function(data) {
     data = data.toString().replace(/\n$/,"")
-    console.log(data);
+    log(data);
   });
   return child.on('exit', function(code, signal) {
     if(code == null && signal == "SIGTERM") 
       respawn()
     else {
-      console.log('node exited with code ' + (code ? code.toString() : "null") + " and signal " + (signal ? signal.toString() : "null"));
-      process.exit(0)
+      log('child exited with code ' + (code ? code.toString() : "null") + " and signal " + (signal ? signal.toString() : "null"));
+      if(growlNotify)
+        growl.notify(command + " child process exited with code " + (code ? code.toString() : "null"))
+      if(respawnOnExit) {
+        log("Respawning")
+        respawn()
+      }
+      else {
+        log("Exiting")
+        process.exit(0)
+      }
     }
   });
 };
@@ -89,8 +120,8 @@ function respawn() {
 }
 
 spawn();
-watchDir(wdir);
-setInterval(function() {
-  watchDir(wdir);
-}, 10000) // look for new files every 10s
 
+watchFiles(files);
+// setInterval(function() {
+//   watchDir(wdir);
+// }, 10000) // look for new files every 10s
