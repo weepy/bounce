@@ -116,7 +116,7 @@ function spawn() {
 function respawn() {
   setTimeout(function() {
     spawn()
-  }, 250)
+  }, 1000)
 }
 
 spawn();

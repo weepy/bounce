@@ -1,3 +1,0 @@
-cp bin/bounce /usr/local/bin
-echo "Bounce installed"
-
