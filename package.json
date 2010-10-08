@@ -1,6 +1,6 @@
 {
   "name": "bounce",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Restart scripts upon code changes",
   "author": "weepy",
   "bin": "./bin/bounce",
@@ -9,5 +9,5 @@
     "glob": "*",
     "growl": "*"
   },
-  "engines" : [ "node >=0.2" ]  
+  "engines" : { "node": ">= 0.2.0" }
 }
