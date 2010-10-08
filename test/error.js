@@ -1,1 +1,1 @@
-throw "error"     
+throw "error"      
