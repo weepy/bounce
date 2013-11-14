@@ -7,7 +7,7 @@
   "repository": "http://github.com/weepy/bounce",
   "dependencies": {
     "glob": ">= 1.0.2",
-    "growl": ">= 1.0.2",
-  },  
+    "growl": ">= 1.0.2"
+  },
   "engines" : { "node": ">= 0.2.0" }
 }
